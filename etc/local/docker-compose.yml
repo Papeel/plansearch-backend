@@ -1,0 +1,51 @@
+version: "3.10"
+
+services:
+  mongo:
+    image: "mongo:4.4"
+    container_name: plansearch-mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - plansearch
+
+  plansearch:
+    build:
+      context: ../../
+      dockerfile: etc/local/Dockerfile
+    image: plansearch:latest
+    container_name: plansearch
+    volumes:
+      - ../..:/usr/src/app
+    ports:
+      - "9000:8000"
+    command: bash -c "cd apps/plansearch/http && python main.py"
+    stdin_open: true
+    env_file:
+      - .env
+    tty: true
+    depends_on:
+      - mongo
+    networks:
+      - plansearch
+
+  tests:
+    build:
+      context: ../../
+      dockerfile: etc/local/Dockerfile
+    image: plansearch-tests:latest
+    container_name: plansearch-tests
+    volumes:
+      - ../../:/usr/src/app/
+    stdin_open: true
+    env_file:
+      - .env.tests
+    tty: true
+    command: bash -c "pytest tests"
+    depends_on:
+      - mongo
+    networks:
+      - plansearch
+
+networks:
+  plansearch:
